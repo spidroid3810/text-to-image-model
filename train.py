@@ -31,7 +31,7 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Resize to 256x256
+    transforms.Resize((1024, 1024)),  # Resize to 1024x1024
     transforms.ToTensor()
 ])
 
@@ -46,7 +46,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(100):  # Train for 10 epochs
+for epoch in range(100):  # Train for 100 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
