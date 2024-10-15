@@ -29,10 +29,10 @@ generated_image = np.clip(generated_image, 0, 1)
 # Scale to [0, 255] for image saving
 generated_image = (generated_image * 255).astype(np.uint8)
 
-# Convert from (3, 1024, 1024) to (1024, 1024, 3) for saving as an RGB image
+# Convert from (3, 256, 256) to (256, 256, 3) for saving as an RGB image
 generated_image = np.transpose(generated_image, (1, 2, 0))  # Convert to HWC format
 
 # Save and show the image
 img = Image.fromarray(generated_image, 'RGB')
-img.save('generated_image_512_fixed.png')
+img.save('generated_image_256_fixed.png')
 img.show()
