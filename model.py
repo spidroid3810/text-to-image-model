@@ -15,5 +15,5 @@ class TextToImageModel(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = torch.sigmoid(self.fc3(x))  # Sigmoid activation to scale output to [0, 1]
-        x = x.view(-1, 3, 512, 512)  # Reshape to image size (batch_size, 3, 256, 256)
+        x = x.view(-1, 3, 1024, 1024)  # Reshape to image size (batch_size, 3, 256, 256)
         return x
