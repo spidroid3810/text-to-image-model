@@ -34,5 +34,5 @@ generated_image = np.transpose(generated_image, (1, 2, 0))  # Convert to HWC for
 
 # Save and show the image
 img = Image.fromarray(generated_image, 'RGB')
-img.save('generated_image_256_fixed.png')
+img.save('generated_image_512_fixed.png')
 img.show()
