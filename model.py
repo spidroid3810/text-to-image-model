@@ -4,10 +4,10 @@ import torch.nn as nn
 class TextToImageModel(nn.Module):
     def __init__(self):
         super(TextToImageModel, self).__init__()
-        self.text_embedding = nn.Embedding(1000, 32)  # Reduce embedding size
-        self.fc1 = nn.Linear(32 * 8, 64)  # Reduce number of neurons
-        self.fc2 = nn.Linear(64, 128)
-        self.fc3 = nn.Linear(128, 1024 * 1024 * 3)  # Output 1024x1024 RGB image
+        self.text_embedding = nn.Embedding(1000, 16)  # Reduce embedding size
+        self.fc1 = nn.Linear(16 * 8, 32)  # Reduce number of neurons
+        self.fc2 = nn.Linear(32, 64)
+        self.fc3 = nn.Linear(64, 1024 * 1024 * 3)  # Output 1024x1024 RGB image
 
     def forward(self, text_input):
         x = self.text_embedding(text_input)
