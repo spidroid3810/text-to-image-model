@@ -32,9 +32,13 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024,1024)),  # Resize to 256x256
+    transforms.Resize((1024, 1024)),
+    transforms.RandomHorizontalFlip(),  # Random flipping
+    transforms.RandomRotation(10),  # Randomly rotate images
+    transforms.ColorJitter(brightness=0.2, contrast=0.2),  # Vary image colors
     transforms.ToTensor()
 ])
+
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
 dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
@@ -42,7 +46,7 @@ dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.009,weight_decay=1e-5)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.009)
 
 # Training loop
 max_len = 8  # Max length for text inputs
