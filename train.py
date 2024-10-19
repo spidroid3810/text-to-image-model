@@ -47,7 +47,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0099)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(300):  # Train for 100 epochs
+for epoch in range(50):  # Train for 100 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -65,7 +65,7 @@ for epoch in range(300):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/300], Loss: {loss.item():.3f}")
+    print(f"Epoch [{epoch+1}/50], Loss: {loss.item():.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
