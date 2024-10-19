@@ -38,7 +38,7 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=1, shuffle=True)  # Batch size 1
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True)  # Batch size 1
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
@@ -47,7 +47,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjusted learning 
 
 # Training loop
 max_len = 8  # Max length for text inputs
-num_epochs = 100  # Increased epochs
+num_epochs = 10  # Increased epochs
 
 for epoch in range(num_epochs):
     running_loss = 0.0  # Track the loss over the epoch
