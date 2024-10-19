@@ -29,11 +29,11 @@ class TextImageDataset(Dataset):
             image = self.transform(image)
         return text, image
 
-# Data transformations and loading with augmentations
+# Data transformations and loading
 transform = transforms.Compose([
     transforms.Resize((1024, 1024)),  # Resize to 1024x1024
-    transforms.RandomHorizontalFlip(),  # Randomly flip the image
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),  # Adjust color
+    transforms.RandomHorizontalFlip(),  # Random flip
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),  # Random color jitter
     transforms.ToTensor()
 ])
 
@@ -75,6 +75,8 @@ for epoch in range(num_epochs):
 
     # Calculate average loss for the epoch and print it once after all batches
     average_loss = running_loss / len(dataloader)
+    
+    # Print the correct epoch number
     print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.3f}")
 
 # Step 1: Save only the model weights
