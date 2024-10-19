@@ -37,12 +37,12 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.009)
 
 # Training loop
 max_len = 8  # Max length for text inputs
@@ -65,7 +65,7 @@ for epoch in range(100):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
         
-print(f'Epoch [{epoch+1}/60], Loss: {loss.item():.3f}')
+print(f'Epoch [{epoch+1}/100], Loss: {loss.item():.3f}')
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
