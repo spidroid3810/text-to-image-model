@@ -42,12 +42,12 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0099)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0017)
 
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(400):  # Train for 100 epochs
+for epoch in range(100):  # Train for 100 epochs
     running_loss = 0.0  # Track the loss over the epoch
     
     # Iterate over batches
@@ -73,7 +73,7 @@ for epoch in range(400):  # Train for 100 epochs
 
     # Calculate average loss for the epoch and print it once after all batches
     average_loss = running_loss / len(dataloader)
-    print(f"Epoch [{epoch+1}/400], Loss: {average_loss:.3f}")
+    print(f"Epoch [{epoch+1}/100], Loss: {average_loss:.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
