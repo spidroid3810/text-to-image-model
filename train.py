@@ -42,7 +42,7 @@ dataloader = DataLoader(dataset, batch_size=14, shuffle=True)
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0099)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.009)
 
 # Training loop
 max_len = 8  # Max length for text inputs
@@ -70,7 +70,7 @@ for epoch in range(150):  # Train for 100 epochs
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0.2)
+        prune.l1_unstructured(module, name="weight", amount=0.5)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
 # Step 2: Convert the model to half precision (16-bit)
