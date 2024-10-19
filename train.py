@@ -32,7 +32,7 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024,1024)),  # Resize to 256x256
+    transforms.Resize((1024, 1024)),  # Resize to 1024x1024
     transforms.ToTensor()
 ])
 
@@ -48,6 +48,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0099)
 max_len = 8  # Max length for text inputs
 
 for epoch in range(100):  # Train for 100 epochs
+    running_loss = 0.0  # Track the loss over the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -65,7 +66,12 @@ for epoch in range(100):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/100], Loss: {loss.item():.3f}")
+        # Accumulate loss
+        running_loss += loss.item()
+
+    # Print the epoch and the average loss for that epoch
+    average_loss = running_loss / len(dataloader)
+    print(f"Epoch [{epoch+1}/100], Loss: {average_loss:.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
