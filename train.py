@@ -49,7 +49,9 @@ max_len = 8  # Max length for text inputs
 
 for epoch in range(100):  # Train for 100 epochs
     running_loss = 0.0  # Track the loss over the epoch
-    for text, images in dataloader:
+    
+    # Iterate over batches
+    for i, (text, images) in enumerate(dataloader):
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
         text_inputs_padded = torch.zeros((len(text), max_len), dtype=torch.long)
@@ -66,10 +68,10 @@ for epoch in range(100):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-        # Accumulate loss
+        # Accumulate the loss
         running_loss += loss.item()
 
-    # Print the epoch and the average loss for that epoch
+    # Calculate average loss for the epoch and print it once after all batches
     average_loss = running_loss / len(dataloader)
     print(f"Epoch [{epoch+1}/100], Loss: {average_loss:.3f}")
 
