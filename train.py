@@ -5,7 +5,6 @@ from PIL import Image
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from model import TextToImageModel
-import torch.nn.utils.prune as prune
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
@@ -30,24 +29,27 @@ class TextImageDataset(Dataset):
             image = self.transform(image)
         return text, image
 
-# Data transformations and loading
+# Data transformations and loading with augmentations
 transform = transforms.Compose([
     transforms.Resize((1024, 1024)),  # Resize to 1024x1024
+    transforms.RandomHorizontalFlip(),  # Randomly flip the image
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),  # Adjust color
     transforms.ToTensor()
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=1, shuffle=True)  # Batch size 1
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.009)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjusted learning rate
 
 # Training loop
 max_len = 8  # Max length for text inputs
+num_epochs = 100  # Increased epochs
 
-for epoch in range(150):  # Train for 100 epochs
+for epoch in range(num_epochs):
     running_loss = 0.0  # Track the loss over the epoch
     
     # Iterate over batches
@@ -56,9 +58,9 @@ for epoch in range(150):  # Train for 100 epochs
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
         text_inputs_padded = torch.zeros((len(text), max_len), dtype=torch.long)
 
-        for i, txt in enumerate(text_inputs):
+        for j, txt in enumerate(text_inputs):
             end = min(len(txt), max_len)
-            text_inputs_padded[i, :end] = txt[:end]
+            text_inputs_padded[j, :end] = txt[:end]
 
         images = Variable(images)
 
@@ -73,19 +75,10 @@ for epoch in range(150):  # Train for 100 epochs
 
     # Calculate average loss for the epoch and print it once after all batches
     average_loss = running_loss / len(dataloader)
-    print(f"Epoch [{epoch+1}/150], Loss: {average_loss:.3f}")
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {average_loss:.3f}")
 
-# Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
-for module in model.modules():
-    if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0.2)
-        prune.remove(module, 'weight')  # Remove the pruned connections
+# Step 1: Save only the model weights
+torch.save(model.state_dict(), 'model_weights_only.pth')
 
-# Step 2: Convert the model to half precision (16-bit)
-model.half()
-
-# Step 3: Save only the model weights
-torch.save(model.state_dict(), 'model_reduced.safetensors')
-
-# Optional: If you don't want to prune or use quantization, you can just save the model like this:
-# torch.save(model.state_dict(), 'model_weights_only.pth')
+# Optional: If you want to save the full model (weights + architecture), use this:
+# torch.save(model, 'full_model.pth')
