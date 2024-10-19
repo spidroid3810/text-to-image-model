@@ -9,12 +9,12 @@ class TextToImageModel(nn.Module):
         self.text_embedding = nn.Embedding(1000, 8)  # Reduced embedding size
         
         # Fully connected layers for text processing
-        self.fc1 = nn.Linear(8 * 8, 64)  # Smaller FC layer
-        self.fc2 = nn.Linear(64, 128)
+        self.fc1 = nn.Linear(8 * 8, 32)  # Smaller FC layer
+        self.fc2 = nn.Linear(32, 64)
         
         # Instead of fully connected layer to output 1024x1024 directly,
         # use a smaller fully connected layer followed by convolution layers
-        self.fc3 = nn.Linear(128, 256 * 8 * 8)  # Reduce to 8x8 feature map
+        self.fc3 = nn.Linear(64, 1024 * 1024 * 3)  # Reduce to 8x8 feature map
         
         # Convolution layers to progressively upsample the output
         self.conv1 = nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1)  # Output: 16x16
@@ -33,7 +33,7 @@ class TextToImageModel(nn.Module):
         x = torch.relu(self.fc3(x))
         
         # Reshape to 8x8 feature map with 256 channels
-        x = x.view(-1, 256, 8, 8)
+        x = x.view(-1, 3, 1024, 1024)
         
         # Apply convolutional layers to upscale to 1024x1024
         x = torch.relu(self.conv1(x))
