@@ -9,7 +9,7 @@ model.load_state_dict(torch.load('model_reduced.safetensors'))
 model.eval()
 
 # Text input (you can change this to any text from your dataset)
-text_input = "deadpool in action"  # Change this to test other descriptions
+text_input = "A deadpool"  # Change this to test other descriptions
 
 # Simple char-to-int encoding (max_len=8)
 max_len = 8
