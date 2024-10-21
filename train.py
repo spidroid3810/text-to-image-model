@@ -22,7 +22,7 @@ class TextImageDataset(Dataset):
         img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
         image = Image.open(f"{self.img_dir}/{img_name}")
 
-        # Convert image to RGB
+        # Convert image to RGB if needed
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
@@ -32,22 +32,23 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024,1024)),  # Resize to 256x256
+    transforms.Resize((1024, 1024)),  # Resize images to 1024x1024
     transforms.ToTensor()
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=4, shuffle=True)  # Set batch size to 4
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0099)  # Adjust learning rate
 
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(100):  # Train for 100 epochs
+for epoch in range(100):  # Set number of epochs to 100 or more for better results
+    epoch_loss = 0  # Initialize loss for the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -65,15 +66,18 @@ for epoch in range(100):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/100], Loss: {loss.item():.3f}")
+        epoch_loss += loss.item()  # Accumulate batch loss for the epoch
+
+    # Print the average loss for the epoch
+    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0)
+        prune.l1_unstructured(module, name="weight", amount=0.2)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
-# Step 2: Convert the model to half precision (16-bit)
+# Step 2: Convert the model to half precision (16-bit) to save memory
 model.half()
 
 # Step 3: Save only the model weights
