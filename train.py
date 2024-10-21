@@ -44,10 +44,13 @@ model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjust learning rate
 
+# Initialize learning rate scheduler (reduce learning rate every 50 epochs by a factor of 0.1)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(300):  # Set number of epochs to 100 or more for better results
+for epoch in range(300):  # Set number of epochs to 300
     epoch_loss = 0  # Initialize loss for the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
@@ -68,8 +71,11 @@ for epoch in range(300):  # Set number of epochs to 100 or more for better resul
 
         epoch_loss += loss.item()  # Accumulate batch loss for the epoch
 
-    # Print the average loss for the epoch
-    print(f"Epoch [{epoch+1}/300], Loss: {epoch_loss/len(dataloader):.3f}")
+    # Step the learning rate scheduler at the end of each epoch
+    scheduler.step()
+
+    # Print the average loss for the epoch and current learning rate
+    print(f"Epoch [{epoch+1}/300], Loss: {epoch_loss/len(dataloader):.3f}, LR: {scheduler.get_last_lr()[0]:.6f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
