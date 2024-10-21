@@ -37,7 +37,7 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=120, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
@@ -65,7 +65,7 @@ for epoch in range(300):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/300], Loss: {loss.item():.3f}")
+    print(f"Epoch [{epoch+1}/30], Loss: {loss.item():.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
