@@ -50,7 +50,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(200):  # Set number of epochs to 300
+for epoch in range(100):  # Set number of epochs to 300
     epoch_loss = 0  # Initialize loss for the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
@@ -75,7 +75,7 @@ for epoch in range(200):  # Set number of epochs to 300
     scheduler.step()
 
     # Print the average loss for the epoch and current learning rate
-    print(f"Epoch [{epoch+1}/200], Loss: {epoch_loss/len(dataloader):.3f}, LR: {scheduler.get_last_lr()[0]:.6f}")
+    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}, LR: {scheduler.get_last_lr()[0]:.6f}")
     continue
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
