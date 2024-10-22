@@ -37,7 +37,7 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # Set batch size to 4
+dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # Set batch size to 8
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
@@ -47,10 +47,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjust learning ra
 # Initialize learning rate scheduler (reduce learning rate every 50 epochs by a factor of 0.1)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
 
-# Training loop
+# Training loop with early termination based on learning rate
 max_len = 8  # Max length for text inputs
+min_lr = 0.0001  # Set a threshold for the minimum learning rate to terminate training early
 
-for epoch in range(100):  # Set number of epochs to 300
+for epoch in range(100):  # Set number of epochs to 100
     epoch_loss = 0  # Initialize loss for the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
@@ -75,8 +76,13 @@ for epoch in range(100):  # Set number of epochs to 300
     scheduler.step()
 
     # Print the average loss for the epoch and current learning rate
-    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}, LR: {scheduler.get_last_lr()[0]:.6f}")
-    continue
+    current_lr = scheduler.get_last_lr()[0]
+    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}, LR: {current_lr:.6f}")
+
+    # Early termination if learning rate falls below the threshold
+    if current_lr <= min_lr:
+        print(f"Early stopping at epoch {epoch+1} due to low learning rate: {current_lr}")
+        break
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
