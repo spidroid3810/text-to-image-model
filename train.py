@@ -37,7 +37,7 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)  # Set batch size to 4
+dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # Set batch size to 4
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
