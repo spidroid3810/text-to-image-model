@@ -76,6 +76,7 @@ for epoch in range(300):  # Set number of epochs to 300
 
     # Print the average loss for the epoch and current learning rate
     print(f"Epoch [{epoch+1}/300], Loss: {epoch_loss/len(dataloader):.3f}, LR: {scheduler.get_last_lr()[0]:.6f}")
+    continue
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
