@@ -32,7 +32,7 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024, 1024)),  # Resize images to 1024x1024
+    transforms.Resize((64, 64)),  # Resize images to 1024x1024
     transforms.ToTensor()
 ])
 
