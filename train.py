@@ -42,7 +42,7 @@ dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # Set batch size t
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0004)  # Adjust learning rate
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjust learning rate
 
 # Initialize learning rate scheduler (reduce learning rate every 50 epochs by a factor of 0.1)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
