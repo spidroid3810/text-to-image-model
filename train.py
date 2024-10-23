@@ -1,4 +1,4 @@
-Make the model size as per train.py import torch
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
