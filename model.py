@@ -4,8 +4,8 @@ import torch.nn as nn
 class TextToImageModel(nn.Module):
     def __init__(self):
         super(TextToImageModel, self).__init__()
-        self.text_embedding = nn.Embedding(1000, 128)  # Text embedding layer
-        self.fc1 = nn.Linear(128 * 8, 32)  # Fully connected layer (for max_len=8)
+        self.text_embedding = nn.Embedding(1000, 256)  # Text embedding layer
+        self.fc1 = nn.Linear(256 * 8, 32)  # Fully connected layer (for max_len=8)
         self.fc2 = nn.Linear(32, 64)  # Second fully connected layer
         self.fc3 = nn.Linear(64, 1024 * 1024 * 3)  # Output: 256x256 RGB image
 
