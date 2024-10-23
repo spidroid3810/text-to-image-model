@@ -22,7 +22,7 @@ class TextImageDataset(Dataset):
         img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
         image = Image.open(f"{self.img_dir}/{img_name}")
 
-        # Convert image to RGB if needed
+        # Convert image to RGB
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
@@ -32,27 +32,22 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024, 1024)),  # Resize images to 1024x1024
+    transforms.Resize((1024,1024)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # Set batch size to 8
+dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)  # Adjust learning rate
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-# Initialize learning rate scheduler (reduce learning rate every 50 epochs by a factor of 0.1)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
-
-# Training loop with early termination based on learning rate
+# Training loop
 max_len = 8  # Max length for text inputs
-min_lr = 0.0001  # Set a threshold for the minimum learning rate to terminate training early
 
-for epoch in range(100):  # Set number of epochs to 100
-    epoch_loss = 0  # Initialize loss for the epoch
+for epoch in range(50):  # Train for 100 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -70,27 +65,15 @@ for epoch in range(100):  # Set number of epochs to 100
         loss.backward()
         optimizer.step()
 
-        epoch_loss += loss.item()  # Accumulate batch loss for the epoch
-
-    # Step the learning rate scheduler at the end of each epoch
-    scheduler.step()
-
-    # Print the average loss for the epoch and current learning rate
-    current_lr = scheduler.get_last_lr()[0]
-    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}, LR: {current_lr:.6f}")
-
-    # Early termination if learning rate falls below the threshold
-    if current_lr <= min_lr:
-        print(f"Early stopping at epoch {epoch+1} due to low learning rate: {current_lr}")
-        break
+    print(f"Epoch [{epoch+1}/50], Loss: {loss.item():.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0)
+        prune.l1_unstructured(module, name="weight", amount=0.2)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
-# Step 2: Convert the model to half precision (16-bit) to save memory
+# Step 2: Convert the model to half precision (16-bit)
 model.half()
 
 # Step 3: Save only the model weights
