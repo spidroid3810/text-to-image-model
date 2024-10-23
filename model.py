@@ -5,9 +5,9 @@ class TextToImageModel(nn.Module):
     def __init__(self):
         super(TextToImageModel, self).__init__()
         self.text_embedding = nn.Embedding(1000, 256)  # Reduce embedding size
-        self.fc1 = nn.Linear(256 * 8, 512)  # Reduce number of neurons
-        self.fc2 = nn.Linear(512, 1024)
-        self.fc3 = nn.Linear(1024, 256 * 256 * 3)  # Output 1024x1024 RGB image
+        self.fc1 = nn.Linear(256 * 8, 32)  # Reduce number of neurons
+        self.fc2 = nn.Linear(32, 64)
+        self.fc3 = nn.Linear(64, 256 * 256 * 3)  # Output 1024x1024 RGB image
 
     def forward(self, text_input):
         x = self.text_embedding(text_input)
