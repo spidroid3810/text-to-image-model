@@ -1,92 +1,36 @@
-import torch
-import pandas as pd
-from torch.utils.data import DataLoader, Dataset
+Make the model size as per train.py import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import transforms
+from torch.utils.data import DataLoader
 from PIL import Image
-import torchvision.transforms as transforms
-from torch.autograd import Variable
+from dataset import TextImageDataset
 from model import TextToImageModel
-import torch.nn.utils.prune as prune
-
-# Dataset class to load text and images
-class TextImageDataset(Dataset):
-    def __init__(self, csv_file, img_dir, transform=None):
-        self.data = pd.read_csv(csv_file)
-        self.img_dir = img_dir
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        text = self.data.iloc[idx, 1]  # Access the 'text' column
-        img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
-        image = Image.open(f"{self.img_dir}/{img_name}")
-
-        # Convert image to RGB
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        if self.transform:
-            image = self.transform(image)
-        return text, image
-
-# Data transformations and loading
+# Define the hyperparameters
+batch_size = 32
+num_epochs = 10
+learning_rate = 0.001
+# Prepare the dataset
 transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Resize to 256x256
-    transforms.ToTensor()
+    transforms.Resize((64, 64)),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,))
 ])
-
-dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
-
-# Initialize the model, loss function, and optimizer
+dataset = TextImageDataset('data/', transform=transform)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+# Define the model
 model = TextToImageModel()
-criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-# Initialize learning rate scheduler
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
-
-# Training loop
-max_len = 8  # Max length for text inputs
-
-for epoch in range(300):  # Train for 100 epochs
-    epoch_loss = 0  # Initialize loss for the epoch
-    for text, images in dataloader:
-        # Encode text: Convert each string to a tensor of character codes (padded to max_len)
-        text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
-        text_inputs_padded = torch.zeros((len(text), max_len), dtype=torch.long)
-
-        for i, txt in enumerate(text_inputs):
-            end = min(len(txt), max_len)
-            text_inputs_padded[i, :end] = txt[:end]
-
-        images = Variable(images)
-
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+# Train the model
+for epoch in range(num_epochs):
+    for i, (text, image) in enumerate(dataloader):
         optimizer.zero_grad()
-        outputs = model(text_inputs_padded)
-        loss = criterion(outputs, images)
+        output = model(text)
+        loss = criterion(output, image)
         loss.backward()
         optimizer.step()
-
-        epoch_loss += loss.item()  # Accumulate batch loss for the epoch
-
-    # Step the learning rate scheduler based on the average loss of the epoch
-    scheduler.step(epoch_loss / len(dataloader))
-
-    print(f"Epoch [{epoch+1}/300], Loss: {epoch_loss/len(dataloader):.3f}")
-
-# Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
-for module in model.modules():
-    if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0)
-        prune.remove(module, 'weight')  # Remove the pruned connections
-
-# Step 2: Convert the model to half precision (16-bit)
-model.half()
-
-# Step 3: Save only the model weights
-torch.save(model.state_dict(), 'model_reduced.safetensors')
-
-# Optional: If you don't want to prune or use quantization, you can just save the model like this:
-# torch.save(model.state_dict(), 'model_weights_only.pth')
+        if (i+1) % 100 == 0:
+            print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.4f}')
+# Save the model
+torch.save(model.state_dict(), 'model.pth')
