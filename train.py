@@ -32,7 +32,7 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((1024,1024)),  # Resize to 256x256
+    transforms.Resize((1024, 1024)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
@@ -44,10 +44,14 @@ model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+# Initialize learning rate scheduler
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
+
 # Training loop
 max_len = 8  # Max length for text inputs
 
 for epoch in range(100):  # Train for 100 epochs
+    epoch_loss = 0  # Initialize loss for the epoch
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -65,7 +69,12 @@ for epoch in range(100):  # Train for 100 epochs
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/100], Loss: {loss.item():.3f}")
+        epoch_loss += loss.item()  # Accumulate batch loss for the epoch
+
+    # Step the learning rate scheduler based on the average loss of the epoch
+    scheduler.step(epoch_loss / len(dataloader))
+
+    print(f"Epoch [{epoch+1}/100], Loss: {epoch_loss/len(dataloader):.3f}")
 
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
