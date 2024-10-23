@@ -16,7 +16,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5,), (0.5,))
 ])
-dataset = TextImageDataset('data/', transform=transform)
+dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 # Define the model
 model = TextToImageModel()
