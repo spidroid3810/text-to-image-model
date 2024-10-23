@@ -15,5 +15,5 @@ class TextToImageModel(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = torch.sigmoid(self.fc3(x))
-        x = x.view(-1, 3, 256, 256)  # Output larger images
+        x = x.view(-1, 3, 1024, 1024)  # Output larger images
         return x
