@@ -1,105 +1,83 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import transforms
-from torch.utils.data import DataLoader
-from PIL import Image
 import pandas as pd
+from torch.utils.data import DataLoader, Dataset
+from PIL import Image
+import torchvision.transforms as transforms
+from torch.autograd import Variable
+from model import TextToImageModel
+import torch.nn.utils.prune as prune
 
-# Define the TextImageDataset class inside train.py
-class TextImageDataset(torch.utils.data.Dataset):
-    def __init__(self, csv_file, img_dir, transform=None, max_seq_length=26):
-        # Load the CSV file
+# Dataset class to load text and images
+class TextImageDataset(Dataset):
+    def __init__(self, csv_file, img_dir, transform=None):
         self.data = pd.read_csv(csv_file)
         self.img_dir = img_dir
         self.transform = transform
-        self.max_seq_length = max_seq_length  # Maximum length for text sequences
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # Load image path and text from CSV
-        img_name = self.data.iloc[idx, 0]  # Assumes first column is image path
-        text = self.data.iloc[idx, 1]  # Assumes second column is text
-
-        # Load the image
+        text = self.data.iloc[idx, 1]  # Access the 'text' column
+        img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
         image = Image.open(f"{self.img_dir}/{img_name}")
-        
-        # Convert image to RGB if not already
+
+        # Convert image to RGB
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
-        # Apply transformations if any
         if self.transform:
             image = self.transform(image)
+        return text, image
 
-        # Convert text to a tensor and pad/truncate to max_seq_length
-        text_tensor = torch.tensor([ord(c) for c in text[:self.max_seq_length]])  # Truncate text if longer than max_seq_length
-        text_tensor = torch.nn.functional.pad(text_tensor, (0, self.max_seq_length - text_tensor.size(0)), value=0)  # Pad text if shorter
-
-        return text_tensor, image
-
-# Define the model (make sure model.py is properly defined and imported)
-class TextToImageModel(nn.Module):
-    def __init__(self):
-        super(TextToImageModel, self).__init__()
-        input_size = 26  # Example input size
-        hidden_size = 128
-        latent_size = 64
-        output_size = 64 * 64 * 3  # Output size for a 64x64 RGB image
-
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, latent_size),
-            nn.ReLU()
-        )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
-            nn.Tanh()
-        )
-
-    def forward(self, x):
-        z = self.encoder(x)
-        out = self.decoder(z)
-        return out.view(-1, 3, 64, 64)  # Reshape to image dimensions
-
-# Hyperparameters
-batch_size = 32
-num_epochs = 10
-learning_rate = 0.001
-max_seq_length = 26  # Set the max sequence length for text padding
-
-# Prepare the dataset with CSV file and images
+# Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((64, 64)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.Resize((1024,1024)),  # Resize to 256x256
+    transforms.ToTensor()
 ])
 
-dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform, max_seq_length=max_seq_length)
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
+dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-# Define the model
+# Initialize the model, loss function, and optimizer
 model = TextToImageModel()
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-# Train the model
-for epoch in range(num_epochs):
-    for i, (text, image) in enumerate(dataloader):
+# Training loop
+max_len = 8  # Max length for text inputs
+
+for epoch in range(50):  # Train for 100 epochs
+    for text, images in dataloader:
+        # Encode text: Convert each string to a tensor of character codes (padded to max_len)
+        text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
+        text_inputs_padded = torch.zeros((len(text), max_len), dtype=torch.long)
+
+        for i, txt in enumerate(text_inputs):
+            end = min(len(txt), max_len)
+            text_inputs_padded[i, :end] = txt[:end]
+
+        images = Variable(images)
+
         optimizer.zero_grad()
-        output = model(text)
-        loss = criterion(output, image)
+        outputs = model(text_inputs_padded)
+        loss = criterion(outputs, images)
         loss.backward()
         optimizer.step()
 
-        if (i+1) % 100 == 0:
-            print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.3f}')
+    print(f"Epoch [{epoch+1}/50], Loss: {loss.item():.3f}")
 
-# Save the model
-torch.save(model.state_dict(), 'model.pth')
+# Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
+for module in model.modules():
+    if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
+        prune.l1_unstructured(module, name="weight", amount=0.2)
+        prune.remove(module, 'weight')  # Remove the pruned connections
+
+# Step 2: Convert the model to half precision (16-bit)
+model.half()
+
+# Step 3: Save only the model weights
+torch.save(model.state_dict(), 'model_reduced.safetensors')
+
+# Optional: If you don't want to prune or use quantization, you can just save the model like this:
+# torch.save(model.state_dict(), 'model_weights_only.pth')
