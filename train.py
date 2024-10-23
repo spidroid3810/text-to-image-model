@@ -70,7 +70,7 @@ for epoch in range(num_epochs):
         optimizer.step()
 
         if (i+1) % 100 == 0:
-            print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.4f}')
+            print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.3f}')
 
 # Save the model
 torch.save(model.state_dict(), 'model.pth')
