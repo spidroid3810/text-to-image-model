@@ -1,47 +1,20 @@
-import torch
+import torch 
 import torch.nn as nn
 
 class TextToImageModel(nn.Module):
-    def __init__(self, input_size=128, hidden_size=256, latent_size=128, output_size=64*64*3):
+    def __init__(self):
         super(TextToImageModel, self).__init__()
-        # Define the encoder (for text input)
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, latent_size),
-            nn.ReLU()
-        )
+        self.text_embedding = nn.Embedding(1000, 256)  # Text embedding layer
+        self.fc1 = nn.Linear(256 * 8, 512)  # Fully connected layer (for max_len=8)
+        self.fc2 = nn.Linear(512, 1024)  # Second fully connected layer
+        self.fc3 = nn.Linear(1024, 256 * 256 * 3)  # Output: 256x256 RGB image
+
+    def forward(self, text_input):
+        x = self.text_embedding(text_input)  # Convert text input to embeddings
+        x = x.view(x.size(0), -1)  # Flatten embeddings to (batch_size, 256 * 8)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.sigmoid(self.fc3(x))  # Sigmoid activation to scale output to [0, 1]
+        x = x.view(-1, 3, 256, 256)  # Reshape to image size (batch_size, 3, 256, 256)
+        return x
         
-        # Define the decoder (for image generation)
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
-            nn.Tanh()  # Output values between -1 and 1
-        )
-    
-    def forward(self, x):
-        # Encode the input text into a latent representation
-        z = self.encoder(x)
-        
-        # Decode the latent representation to generate an image
-        out = self.decoder(z)
-        
-        # Reshape the output to image format [Batch, Channels, Height, Width]
-        return out.view(-1, 3, 64, 64)
-
-# Example usage
-input_size = 128  # Embedding dimension of input text
-hidden_size = 256  # Size of the hidden layers
-latent_size = 128  # Size of the latent space
-output_size = 64 * 64 * 3  # Size of the output image (64x64 RGB)
-
-# Initialize the model
-model = TextToImageModel(input_size=input_size, hidden_size=hidden_size, latent_size=latent_size, output_size=output_size)
-
-# Example input (batch of text embeddings)
-text_input = torch.randn(32, input_size)  # Batch size of 32
-
-# Forward pass to generate images
-generated_images = model(text_input)
-print(generated_images.shape)  # Should output [32, 3, 64, 64]
