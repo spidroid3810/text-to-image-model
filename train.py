@@ -42,7 +42,7 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
 criterion = torch.nn.MSELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
 max_len = 8  # Max length for text inputs
