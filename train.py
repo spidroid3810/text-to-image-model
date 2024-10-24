@@ -37,7 +37,7 @@ transform = transforms.Compose([
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
-dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=30, shuffle=False)
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
@@ -47,7 +47,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(100):  # Train for 100 epochs
+for epoch in range(50):  # Train for 100 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
