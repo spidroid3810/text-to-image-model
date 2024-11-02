@@ -7,7 +7,7 @@ class TextToImageModel(nn.Module):
         self.text_embedding = nn.Embedding(1000, 256)  # Text embedding layer
         self.fc1 = nn.Linear(256 * 8, 512)  # Fully connected layer (for max_len=8)
         self.fc2 = nn.Linear(512, 1024)  # Second fully connected layer
-        self.fc3 = nn.Linear(10244, 256 * 256 * 3)  # Output: 256x256 RGB image
+        self.fc3 = nn.Linear(1024, 256 * 256 * 3)  # Output: 256x256 RGB image
 
     def forward(self, text_input):
         x = self.text_embedding(text_input)  # Convert text input to embeddings
