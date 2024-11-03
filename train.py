@@ -37,7 +37,7 @@ transform = transforms.Compose([
 ])
 
 # Update the dataset initialization to read from Parquet
-dataset = TextImageDataset('data/dataset.parquet', 'data/images', transform=transform)
+dataset = TextImageDataset('data/dataset.parquet', transform=transform)
 dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
 # Initialize the model, loss function, and optimizer
