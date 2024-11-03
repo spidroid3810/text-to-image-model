@@ -9,9 +9,8 @@ import torch.nn.utils.prune as prune
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
-    def __init__(self, parquet_file, img_dir, transform=None):
-        self.data = pd.read_parquet(parquet_file)  # Load data from Parquet file
-        self.img_dir = img_dir
+    def __init__(self, parquet_file, transform=None):
+        self.data = pd.read_parquet(parquet_file)  # Load from Parquet
         self.transform = transform
 
     def __len__(self):
@@ -19,8 +18,8 @@ class TextImageDataset(Dataset):
 
     def __getitem__(self, idx):
         text = self.data.iloc[idx, 1]  # Access the 'text' column
-        img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
-        image = Image.open(f"{self.img_dir}/{img_name}")
+        img_url = self.data.iloc[idx, 0]  # Access the 'image_url' column
+        image = Image.open(requests.get(img_url, stream=True).raw)  # Load image from URL
 
         # Convert image to RGB
         if image.mode != 'RGB':
@@ -32,12 +31,11 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((256,256)),  # Resize to 256x256
+    transforms.Resize((256, 256)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
-# Update the dataset initialization to read from Parquet
-dataset = TextImageDataset('data/dataset.parquet', transform=transform)
+dataset = TextImageDataset('data/dataset.parquet', transform=transform)  # Use Parquet file
 dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
 # Initialize the model, loss function, and optimizer
@@ -79,6 +77,3 @@ model.half()
 
 # Step 3: Save only the model weights
 torch.save(model.state_dict(), 'model_reduced.safetensors')
-
-# Optional: If you don't want to prune or use quantization, you can just save the model like this:
-# torch.save(model.state_dict(), 'model_weights_only.pth')
