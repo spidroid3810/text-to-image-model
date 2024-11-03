@@ -9,8 +9,8 @@ import torch.nn.utils.prune as prune
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
-    def __init__(self, csv_file, img_dir, transform=None):
-        self.data = pd.read_csv(csv_file)
+    def __init__(self, parquet_file, img_dir, transform=None):
+        self.data = pd.read_parquet(parquet_file)  # Load data from Parquet file
         self.img_dir = img_dir
         self.transform = transform
 
@@ -36,7 +36,8 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
+# Update the dataset initialization to read from Parquet
+dataset = TextImageDataset('data/dataset.parquet', 'data/images', transform=transform)
 dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
 # Initialize the model, loss function, and optimizer
@@ -47,7 +48,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(200):  # Train for 100 epochs
+for epoch in range(200):  # Train for 200 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
