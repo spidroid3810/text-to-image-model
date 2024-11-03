@@ -6,22 +6,21 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from model import TextToImageModel
 import torch.nn.utils.prune as prune
-import requests  # Import requests to load images from URLs
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
-    def __init__(self, parquet_file, transform=None):
-        self.data = pd.read_parquet(parquet_file)  # Load from Parquet file
+    def __init__(self, csv_file, img_dir, transform=None):
+        self.data = pd.read_csv(csv_file)
+        self.img_dir = img_dir
         self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        text = self.data.iloc[idx]["prompt"]  # Access the 'prompt' column
-        img_url = self.data.iloc[idx]["image_url"]  # Access the 'image_url' column
-        # Load image from URL
-        image = Image.open(requests.get(img_url, stream=True).raw)
+        text = self.data.iloc[idx, 1]  # Access the 'text' column
+        img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
+        image = Image.open(f"{self.img_dir}/{img_name}")
 
         # Convert image to RGB
         if image.mode != 'RGB':
@@ -33,13 +32,12 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Resize to 256x256
+    transforms.Resize((256,256)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
-# Create dataset and dataloader
-dataset = TextImageDataset('data/dataset.parquet', transform=transform)  # Replace 'data/dataset.parquet' with your actual path
-dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
+dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
+dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
 # Initialize the model, loss function, and optimizer
 model = TextToImageModel()
@@ -49,7 +47,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(200):  # Train for 200 epochs
+for epoch in range(200):  # Train for 100 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -80,3 +78,6 @@ model.half()
 
 # Step 3: Save only the model weights
 torch.save(model.state_dict(), 'model_reduced.safetensors')
+
+# Optional: If you don't want to prune or use quantization, you can just save the model like this:
+# torch.save(model.state_dict(), 'model_weights_only.pth')
