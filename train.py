@@ -6,20 +6,22 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from model import TextToImageModel
 import torch.nn.utils.prune as prune
+import requests  # Import requests to load images from URLs
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
     def __init__(self, parquet_file, transform=None):
-        self.data = pd.read_parquet(parquet_file)  # Load from Parquet
+        self.data = pd.read_parquet(parquet_file)  # Load from Parquet file
         self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        text = self.data.iloc[idx, 1]  # Access the 'text' column
-        img_url = self.data.iloc[idx, 0]  # Access the 'image_url' column
-        image = Image.open(requests.get(img_url, stream=True).raw)  # Load image from URL
+        text = self.data.iloc[idx]["prompt"]  # Access the 'prompt' column
+        img_url = self.data.iloc[idx]["image_url"]  # Access the 'image_url' column
+        # Load image from URL
+        image = Image.open(requests.get(img_url, stream=True).raw)
 
         # Convert image to RGB
         if image.mode != 'RGB':
@@ -35,7 +37,8 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-dataset = TextImageDataset('data/dataset.parquet', transform=transform)  # Use Parquet file
+# Create dataset and dataloader
+dataset = TextImageDataset('data/dataset.parquet', transform=transform)  # Replace 'data/dataset.parquet' with your actual path
 dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
 # Initialize the model, loss function, and optimizer
