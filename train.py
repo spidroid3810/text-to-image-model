@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-from model import TextToImageModel
+from model import TextToImageModel, Discriminator  # Import the Discriminator class
 import torch.nn.utils.prune as prune
 
 # Dataset class to load text and images
@@ -32,22 +32,25 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((256,256)),  # Resize to 256x256
+    transforms.Resize((256, 256)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
 dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
 dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-# Initialize the model, loss function, and optimizer
-model = TextToImageModel()
-criterion = torch.nn.BCELoss()  # Mean Squared Error Loss for image generation
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+# Initialize the models, loss function, and optimizers
+generator = TextToImageModel()
+discriminator = Discriminator()
+
+criterion = torch.nn.BCELoss()  # Binary Cross Entropy Loss for discriminator
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)  # Optimizer for generator
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)  # Optimizer for discriminator
 
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(200):  # Train for 100 epochs
+for epoch in range(200):  # Train for 200 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -59,25 +62,58 @@ for epoch in range(200):  # Train for 100 epochs
 
         images = Variable(images)
 
-        optimizer.zero_grad()
-        outputs = model(text_inputs_padded)
-        loss = criterion(outputs, images)
-        loss.backward()
-        optimizer.step()
+        # Train Discriminator
+        optimizer_D.zero_grad()
 
-    print(f"Epoch [{epoch+1}/200], Loss: {loss.item():.3f}")
+        # Generate fake images
+        fake_images = generator(text_inputs_padded)
 
-# Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
-for module in model.modules():
+        # Labels for real and fake images
+        real_labels = torch.ones(images.size(0), 1)  # Real images label
+        fake_labels = torch.zeros(images.size(0), 1)  # Fake images label
+
+        # Calculate loss on real and fake images
+        outputs_real = discriminator(images)
+        d_loss_real = criterion(outputs_real, real_labels)
+
+        outputs_fake = discriminator(fake_images.detach())  # Detach to avoid backprop through generator
+        d_loss_fake = criterion(outputs_fake, fake_labels)
+
+        # Total discriminator loss
+        d_loss = d_loss_real + d_loss_fake
+        d_loss.backward()
+        optimizer_D.step()
+
+        # Train Generator
+        optimizer_G.zero_grad()
+
+        # Generate fake images
+        fake_images = generator(text_inputs_padded)
+
+        # Calculate loss for generator
+        outputs = discriminator(fake_images)  # Evaluate fake images
+        g_loss = criterion(outputs, real_labels)  # We want generator to fool the discriminator
+
+        g_loss.backward()
+        optimizer_G.step()
+
+    print(f"Epoch [{epoch + 1}/200], D Loss: {d_loss.item():.3f}, G Loss: {g_loss.item():.3f}")
+
+# Optional: Save the models after training
+torch.save(generator.state_dict(), 'generator.pth')
+torch.save(discriminator.state_dict(), 'discriminator.pth')
+
+# Step 1: Prune the generator model (remove 20% of weights in both Linear and Conv2d layers)
+for module in generator.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
         prune.l1_unstructured(module, name="weight", amount=0)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
-# Step 2: Convert the model to half precision (16-bit)
-model.half()
+# Step 2: Convert the generator model to half precision (16-bit)
+generator.half()
 
-# Step 3: Save only the model weights
-torch.save(model.state_dict(), 'model_reduced.safetensors')
+# Step 3: Save only the generator model weights
+torch.save(generator.state_dict(), 'generator_reduced.safetensors')
 
 # Optional: If you don't want to prune or use quantization, you can just save the model like this:
-# torch.save(model.state_dict(), 'model_weights_only.pth')
+# torch.save(generator.state_dict(), 'generator_weights_only.pth')
