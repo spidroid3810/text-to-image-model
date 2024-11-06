@@ -113,7 +113,7 @@ for module in generator.modules():
 model.half()
 
 # Step 3: Save only the generator model weights
-torch.save(model.state_dict(), 'model_reduced.safetensors')
+torch.save(model.state_dict(), 'model_reduced.pth')
 
 # Optional: If you don't want to prune or use quantization, you can just save the model like this:
 # torch.save(generator.state_dict(), 'generator_weights_only.pth')
