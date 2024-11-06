@@ -71,10 +71,13 @@ for epoch in range(200):  # Train for 50 epochs
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0.2)
+        prune.l1_unstructured(module, name="weight", amount=0)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
-# Step 2: Save the model weights
+# Step 2: Convert the model to half precision (16-bit)
+model.half()
+
+# Step 3: Save the model weights
 torch.save(model.state_dict(), 'model_reduced.pth')
 
 # Optional: If you don't want to prune or use quantization, you can just save the model like this:
