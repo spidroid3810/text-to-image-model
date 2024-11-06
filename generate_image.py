@@ -5,7 +5,7 @@ import numpy as np
 
 # Load the trained model
 model = TextToImageModel()
-model.load_state_dict(torch.load('generator_model.pth'))
+model.load_state_dict(torch.load('model_reduced.pth'))
 model.eval()
 
 # Text input (you can change this to any text from your dataset)
@@ -34,5 +34,5 @@ generated_image = np.transpose(generated_image, (1, 2, 0))  # Convert to HWC for
 
 # Save and show the image
 img = Image.fromarray(generated_image, 'RGB')
-img.save('generated_image_1024_fixed.jpg')
+img.save('generated_image_256_fixed.jpg')
 img.show()
