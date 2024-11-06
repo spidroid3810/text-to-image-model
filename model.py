@@ -1,6 +1,7 @@
-import torch 
+import torch
 import torch.nn as nn
 
+# Generator model (TextToImageModel)
 class TextToImageModel(nn.Module):
     def __init__(self):
         super(TextToImageModel, self).__init__()
@@ -17,4 +18,20 @@ class TextToImageModel(nn.Module):
         x = torch.sigmoid(self.fc3(x))  # Sigmoid activation to scale output to [0, 1]
         x = x.view(-1, 3, 256, 256)  # Reshape to image size (batch_size, 3, 256, 256)
         return x
-        
+
+# Discriminator model
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=4, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1)
+        self.fc1 = nn.Linear(256 * 32 * 32, 1)  # For 256x256 images, this layer outputs a single score
+
+    def forward(self, image):
+        x = torch.relu(self.conv1(image))
+        x = torch.relu(self.conv2(x))
+        x = torch.relu(self.conv3(x))
+        x = x.view(x.size(0), -1)  # Flatten
+        x = torch.sigmoid(self.fc1(x))  # Output between 0 and 1
+        return x
