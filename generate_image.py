@@ -5,7 +5,7 @@ import numpy as np
 
 # Load the trained model
 model = TextToImageModel()
-model.load_state_dict(torch.load('model_reduced.pth'))
+model.load_state_dict(torch.load('generator_reduced.pth'))
 model.eval()
 
 # Text input (you can change this to any text from your dataset)
