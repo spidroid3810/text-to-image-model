@@ -44,7 +44,7 @@ model = TextToImageModel()
 discriminator = Discriminator()
 
 criterion = torch.nn.MSELoss()  # Binary Cross Entropy Loss for discriminator
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)  # Optimizer for generator
+optimizer_G = torch.optim.Adam(model.parameters(), lr=0.001)  # Optimizer for generator
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)  # Optimizer for discriminator
 
 # Training loop
