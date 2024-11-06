@@ -40,11 +40,11 @@ dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transfor
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 # Initialize the models, loss function, and optimizers
-model = TextToImageModel()
+generator = TextToImageModel()
 discriminator = Discriminator()
 
 criterion = torch.nn.MSELoss()  # Binary Cross Entropy Loss for discriminator
-optimizer_G = torch.optim.Adam(model.parameters(), lr=0.001)  # Optimizer for generator
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)  # Optimizer for generator
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)  # Optimizer for discriminator
 
 # Training loop
@@ -110,7 +110,7 @@ for module in generator.modules():
         prune.remove(module, 'weight')  # Remove the pruned connections
 
 # Step 2: Convert the generator model to half precision (16-bit)
-model.half()
+generator.half()
 
 # Step 3: Save only the generator model weights
 torch.save(model.state_dict(), 'model_reduced.pth')
