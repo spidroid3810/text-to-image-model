@@ -104,7 +104,7 @@ for epoch in range(200):  # Train for 200 epochs
 # Step 1: Prune the generator model (remove 20% of weights in both Linear and Conv2d layers)
 for module in generator.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):
-        prune.l1_unstructured(module, name="weight", amount=0.2)
+        prune.l1_unstructured(module, name="weight", amount=0)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
 # Step 2: Convert the generator model to half precision (16-bit)
