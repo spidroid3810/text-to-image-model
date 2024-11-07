@@ -45,8 +45,8 @@ discriminator = Discriminator()
 
 # Loss function and optimizers
 criterion = torch.nn.BCELoss()  # Binary Cross-Entropy Loss for discriminator
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)  # Generator optimizer
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.002)  # Discriminator optimizer
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.002)  # Generator optimizer
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)  # Discriminator optimizer
 
 # Training loop
 max_len = 8  # Max length for text inputs
