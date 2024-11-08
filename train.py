@@ -6,21 +6,23 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from model import TextToImageModel
 import torch.nn.utils.prune as prune
+from datasets import load_dataset
+
+# Load the dataset from Hugging Face
+ds = load_dataset("Saad381/SpectraDS")  # Loads the dataset as a Hugging Face dataset object
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
-    def __init__(self, csv_file, img_dir, transform=None):
-        self.data = pd.read_csv(csv_file)
-        self.img_dir = img_dir
+    def __init__(self, dataset, transform=None):
+        self.data = dataset['train']  # Assume we’re using the training split
         self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        text = self.data.iloc[idx, 1]  # Access the 'text' column
-        img_name = self.data.iloc[idx, 0]  # Access the 'image_path' column
-        image = Image.open(f"{self.img_dir}/{img_name}")
+        text = self.data[idx]['text']  # Access the text column
+        image = Image.open(self.data[idx]['file_name'])  # Access the image path column
 
         # Convert image to RGB
         if image.mode != 'RGB':
@@ -32,11 +34,12 @@ class TextImageDataset(Dataset):
 
 # Data transformations and loading
 transform = transforms.Compose([
-    transforms.Resize((256,256)),  # Resize to 256x256
+    transforms.Resize((256, 256)),  # Resize to 256x256
     transforms.ToTensor()
 ])
 
-dataset = TextImageDataset('data/dataset.csv', 'data/images', transform=transform)
+# Initialize dataset and dataloader
+dataset = TextImageDataset(ds, transform=transform)
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 # Initialize the model, loss function, and optimizer
@@ -47,7 +50,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # Training loop
 max_len = 8  # Max length for text inputs
 
-for epoch in range(200):  # Train for 100 epochs
+for epoch in range(200):  # Train for 200 epochs
     for text, images in dataloader:
         # Encode text: Convert each string to a tensor of character codes (padded to max_len)
         text_inputs = [torch.tensor([ord(c) for c in t]) for t in text]
@@ -70,7 +73,7 @@ for epoch in range(200):  # Train for 100 epochs
 # Step 1: Prune the model (remove 20% of weights in both Linear and Conv2d layers)
 for module in model.modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv2d)):  # Prune both Linear and Conv2d layers
-        prune.l1_unstructured(module, name="weight", amount=0)
+        prune.l1_unstructured(module, name="weight", amount=0.2)
         prune.remove(module, 'weight')  # Remove the pruned connections
 
 # Step 2: Convert the model to half precision (16-bit)
