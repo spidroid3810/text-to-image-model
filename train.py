@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from model import TextToImageModel
 import torch.nn.utils.prune as prune
-from datasets import load_dataset
+from dataset import load_dataset
 
 # Load the dataset from Hugging Face
 dataset = load_dataset("Saad381/SpectraDS")  # Loads the dataset as a Hugging Face dataset object
