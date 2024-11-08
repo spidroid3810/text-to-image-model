@@ -9,7 +9,7 @@ import torch.nn.utils.prune as prune
 from datasets import load_dataset
 
 # Load the dataset from Hugging Face
-ds = load_dataset("Saad381/SpectraDS")  # Loads the dataset as a Hugging Face dataset object
+datasets = load_dataset("Saad381/SpectraDS")  # Loads the dataset as a Hugging Face dataset object
 
 # Dataset class to load text and images
 class TextImageDataset(Dataset):
