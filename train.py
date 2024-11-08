@@ -22,7 +22,7 @@ class TextImageDataset(Dataset):
 
     def __getitem__(self, idx):
         text = self.data[idx]['text']  # Access the text column
-        image = Image.open(self.data[idx]['file_name'])  # Access the image path column
+        image = Image.open(self.data[idx]['image'])  # Access the image path column
 
         # Convert image to RGB
         if image.mode != 'RGB':
